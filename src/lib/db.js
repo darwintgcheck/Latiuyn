@@ -1,17 +1,34 @@
 import pg from 'pg';
+import { newDb } from 'pg-mem';
+import { randomUUID } from 'crypto';
 
 const { Pool } = pg;
+export const runtimeMode = process.env.DATABASE_URL ? 'postgres' : 'memory';
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('render.com') || process.env.PGSSLMODE === 'require'
-    ? { rejectUnauthorized: false }
-    : false
-});
+function createPool() {
+  if (runtimeMode === 'postgres') {
+    return new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL?.includes('render.com') || process.env.PGSSLMODE === 'require'
+        ? { rejectUnauthorized: false }
+        : false
+    });
+  }
+
+  const db = newDb({ autoCreateForeignKeyIndices: true });
+  db.public.registerFunction({
+    name: 'gen_random_uuid',
+    returns: 'uuid',
+    implementation: () => randomUUID(),
+    impure: true
+  });
+  const adapter = db.adapters.createPg();
+  return new adapter.Pool();
+}
+
+export const pool = createPool();
 
 const schema = `
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT NOT NULL UNIQUE,
@@ -103,11 +120,11 @@ CREATE TABLE IF NOT EXISTS referral_rewards (
 `;
 
 const seedRooms = [
-  ['bronze-020', 'Bronze 0.20₼', '#22c55e', 0.20, 4.0, 'full', 6, 30, 4, 4, 10, false, 0, 1],
-  ['silver-050', 'Silver 0.50₼', '#f59e0b', 0.50, 2.2, 'one_line', 6, 30, 4, 4, 10, false, 0, 2],
-  ['gold-100', 'Gold 1.00₼', '#06b6d4', 1.00, 2.5, 'full', 6, 25, 4, 5, 12, false, 0, 3],
-  ['platinum-500', 'Platinum 5.00₼', '#8b5cf6', 5.00, 2.0, 'full', 4, 20, 3, 4, 8, false, 0, 4],
-  ['jackpot-1000', 'Jackpot 10.00₼', '#ec4899', 10.00, 1.8, 'full', 4, 20, 3, 4, 8, true, 100, 5]
+  ['bronze-020', 'Neva Classic 0.20₼', '#34d399', 0.20, 4.0, 'full', 6, 28, 4, 4, 10, false, 0, 1],
+  ['silver-050', 'Moscow Silver 0.50₼', '#f59e0b', 0.50, 2.4, 'one_line', 6, 28, 4, 4, 10, false, 0, 2],
+  ['gold-100', 'Siberia Gold 1.00₼', '#38bdf8', 1.00, 2.8, 'full', 6, 24, 4, 5, 12, false, 0, 3],
+  ['platinum-500', 'Imperial Platinum 5.00₼', '#a78bfa', 5.00, 2.1, 'full', 4, 20, 3, 4, 8, false, 0, 4],
+  ['jackpot-1000', 'Red Star Jackpot 10.00₼', '#f472b6', 10.00, 1.9, 'full', 4, 18, 3, 4, 8, true, 150, 5]
 ];
 
 export async function initDb() {
@@ -118,7 +135,20 @@ export async function initDb() {
       `INSERT INTO rooms
         (slug, name, theme, ticket_price, prize_multiplier, win_type, max_tickets, countdown_seconds, draw_interval_seconds, bot_target_min, bot_target_max, jackpot_enabled, jackpot_seed, sort_order)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       ON CONFLICT (slug) DO NOTHING`,
+       ON CONFLICT (slug) DO UPDATE SET
+         name = EXCLUDED.name,
+         theme = EXCLUDED.theme,
+         ticket_price = EXCLUDED.ticket_price,
+         prize_multiplier = EXCLUDED.prize_multiplier,
+         win_type = EXCLUDED.win_type,
+         max_tickets = EXCLUDED.max_tickets,
+         countdown_seconds = EXCLUDED.countdown_seconds,
+         draw_interval_seconds = EXCLUDED.draw_interval_seconds,
+         bot_target_min = EXCLUDED.bot_target_min,
+         bot_target_max = EXCLUDED.bot_target_max,
+         jackpot_enabled = EXCLUDED.jackpot_enabled,
+         jackpot_seed = EXCLUDED.jackpot_seed,
+         sort_order = EXCLUDED.sort_order`,
       room
     );
   }
