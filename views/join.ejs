@@ -1,0 +1,59 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container split-page">
+  <div class="glass-panel room-summary" style="--room-theme:<%= snapshot.room.theme %>">
+    <span class="eyebrow">Bilet masası</span>
+    <h1><%= snapshot.room.name %></h1>
+    <p class="muted"><strong><%= helpers.statusLabel(snapshot.round.status) %></strong> · Pot: <strong><%= helpers.money(snapshot.round.pot_amount) %></strong> · Oyunçu: <strong><%= snapshot.playerCount %></strong></p>
+    <div class="summary-grid">
+      <div><span>Bilet qiyməti</span><strong><%= helpers.money(snapshot.room.ticket_price) %></strong></div>
+      <div><span>Maksimum</span><strong><%= snapshot.room.max_tickets %> bilet</strong></div>
+      <div><span>Qalib qaydası</span><strong><%= helpers.winTypeLabel(snapshot.room.win_type) %></strong></div>
+      <div><span>Jackpot</span><strong><%= snapshot.room.jackpot_enabled ? helpers.money(snapshot.round.jackpot_amount) : 'Yoxdur' %></strong></div>
+    </div>
+    <div class="callout-box">
+      <strong>Bu otaqda nə baş verir</strong>
+      <ul class="list-check" style="margin-top:10px">
+        <li>İlk insan bileti gələn kimi countdown başlayır</li>
+        <li>Botlar potu doldurur və lobby hissini gücləndirir</li>
+        <li>Draw başlayanda toplar server tərəfindən sırayla açılır</li>
+      </ul>
+    </div>
+  </div>
+  <div class="glass-panel buy-panel">
+    <h2>Bilet al</h2>
+    <p class="muted">Auto mark aktivdirsə sistem çıxan rəqəmləri avtomatik işarələyəcək.</p>
+    <form method="post" class="form-grid">
+      <label>Bilet sayı
+        <select name="count">
+          <% for (let i = 1; i <= snapshot.room.max_tickets; i++) { %>
+            <option value="<%= i %>"><%= i %></option>
+          <% } %>
+        </select>
+      </label>
+      <label class="checkbox-row"><input type="checkbox" name="autoMark" checked /> Auto mark aktiv</label>
+      <button class="btn" type="submit">Biletləri al</button>
+      <a class="btn btn-ghost" href="/rooms/<%= snapshot.room.slug %>/play">Canlı oyun səhifəsinə keç</a>
+    </form>
+    <% if (snapshot.myTickets.length) { %>
+      <div class="ticket-preview-wrap">
+        <h3>Mövcud biletlərim</h3>
+        <div class="ticket-grid-list">
+          <% snapshot.myTickets.forEach(ticket => { %>
+            <div class="ticket-card">
+              <div class="ticket-meta"><strong>Bilet</strong><span>Hazırdır</span></div>
+              <% ticket.card.forEach(row => { %>
+                <div class="ticket-row">
+                  <% row.forEach(cell => { %>
+                    <span class="ticket-cell <%= cell === null ? 'empty' : '' %>"><%= cell ?? '' %></span>
+                  <% }) %>
+                </div>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/footer') %>

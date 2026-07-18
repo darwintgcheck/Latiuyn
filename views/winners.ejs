@@ -1,0 +1,29 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container page-head">
+  <div>
+    <span class="eyebrow">History</span>
+    <h1>Son qaliblər</h1>
+    <p class="muted">Tamamlanan raundlar və jackpot qalibləri burada göstərilir.</p>
+  </div>
+</section>
+<section class="container cards-2" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));padding-bottom:60px">
+  <% winners.forEach(item => { %>
+    <article class="glass-panel winner-card">
+      <div class="winner-top">
+        <div>
+          <h3><%= item.winner_name %></h3>
+          <p><%= item.room_name %></p>
+        </div>
+        <strong><%= helpers.money(item.winner_prize) %></strong>
+      </div>
+      <p class="muted">Qalib kombinasiyası: <%= item.winning_numbers.join(', ') %></p>
+      <% if (item.jackpot_prize) { %><p class="jackpot-text">Jackpot: <%= helpers.money(item.jackpot_prize) %></p><% } %>
+      <small><%= new Date(item.finished_at).toLocaleString('az-AZ') %></small>
+    </article>
+  <% }) %>
+  <% if (!winners.length) { %>
+    <article class="glass-panel"><p class="muted">Hələ tamamlanmış raund yoxdur.</p></article>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

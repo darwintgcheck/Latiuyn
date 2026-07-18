@@ -1,0 +1,75 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container page-head play-head">
+  <div>
+    <span class="eyebrow">Canlı oyun</span>
+    <h1><%= state.room.name %></h1>
+    <p class="muted">Status: <strong id="gameStatus"><%= helpers.statusLabel(state.round.status) %></strong> · Pot: <strong id="gamePot"><%= helpers.money(state.round.potAmount) %></strong> · Oyunçu sayı: <strong id="gamePlayers"><%= state.round.playerCount %></strong></p>
+  </div>
+  <div class="play-side-panel glass-panel">
+    <div><span>Timer</span><strong id="gameTimer"><%= helpers.fmtSecs(state.round.secsLeft) %></strong></div>
+    <div><span>Jackpot</span><strong id="gameJackpot"><%= state.round.jackpotAmount !== null ? helpers.money(state.round.jackpotAmount) : '—' %></strong></div>
+    <a class="btn btn-sm" href="/rooms/<%= state.room.slug %>/join">Yeni bilet al</a>
+  </div>
+</section>
+<section class="container overview-grid" style="margin-bottom:18px">
+  <article class="overview-card">
+    <span class="tiny-label">Son çağırılan top</span>
+    <h2 id="lastBall"><%= state.round.drawnNumbers[state.round.drawnNumbers.length - 1] || '—' %></h2>
+    <p class="muted" id="calloutLine"><%= state.round.drawnNumbers.length ? `Aparıcı çağırdı: ${state.round.drawnNumbers[state.round.drawnNumbers.length - 1]}` : 'Raund başlayanda ilk top burada görünəcək' %></p>
+  </article>
+  <article class="overview-card">
+    <span class="tiny-label">Açılan toplar</span>
+    <h2><span id="drawnCount"><%= state.round.drawnNumbers.length %></span>/90</h2>
+    <p class="muted">Qalan top sayı: <strong id="remainingCount"><%= 90 - state.round.drawnNumbers.length %></strong></p>
+    <div class="progress-shell"><div id="drawProgressBar" class="progress-bar" style="width:<%= (state.round.drawnNumbers.length / 90) * 100 %>%"></div></div>
+  </article>
+  <article class="overview-card">
+    <span class="tiny-label">Qalib qaydası</span>
+    <h2><%= helpers.winTypeLabel(state.room.winType) %></h2>
+    <p class="muted"><%= state.room.winType === 'one_line' ? 'İstənilən bir sətiri tam bağlayan ilk bilet qalib olur.' : 'Biletdəki bütün rəqəmləri tamamlayan ilk bilet qalib olur.' %></p>
+  </article>
+</section>
+<section class="container play-layout" data-play data-room-slug="<%= state.room.slug %>">
+  <div class="glass-panel balls-panel">
+    <h3>Çıxan rəqəmlər</h3>
+    <div id="drawnBalls" class="balls-grid">
+      <% state.round.drawnNumbers.forEach((n, idx) => { %><span class="ball <%= idx === state.round.drawnNumbers.length - 1 ? 'latest' : '' %>"><%= n %></span><% }) %>
+    </div>
+  </div>
+  <div class="glass-panel tickets-panel">
+    <h3>Mənim biletlərim</h3>
+    <div id="ticketWrap" class="ticket-grid-list large">
+      <% state.round.myTickets.forEach(ticket => { %>
+        <div class="ticket-card live-ticket">
+          <div class="ticket-meta">
+            <strong>Bilet</strong>
+            <span><%= ticket.markedNumbers.length %>/<%= ticket.card.flat().filter(cell => Number.isInteger(cell)).length %> bağlandı</span>
+          </div>
+          <% ticket.card.forEach(row => { %>
+            <div class="ticket-row">
+              <% row.forEach(cell => { const marked = ticket.markedNumbers.includes(cell); %>
+                <span class="ticket-cell <%= cell === null ? 'empty' : '' %> <%= marked ? 'marked' : '' %>"><%= cell ?? '' %></span>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
+      <% if (!state.round.myTickets.length) { %>
+        <p class="muted">Bu raund üçün biletiniz yoxdur.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+<div class="container">
+  <div id="winnerBox" class="winner-box <%= state.round.winner ? '' : 'hidden' %> <%= state.round.winner && !state.round.winner.youWon ? 'loss' : '' %>">
+    <% if (state.round.winner) { %>
+      <strong><%= state.round.winner.youWon ? 'Təbriklər, qalib oldun!' : 'Raund tamamlandı' %></strong><br>
+      <%= state.round.winner.name %> <%= helpers.money(state.round.winner.prize) %> qazandı<%= state.round.jackpot ? ` · Jackpot: ${helpers.money(state.round.jackpot.prize)}` : '' %>
+    <% } %>
+  </div>
+</div>
+<script>
+  window.__PLAY_STATE__ = <%- JSON.stringify(state) %>;
+</script>
+<%- include('partials/footer') %>

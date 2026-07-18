@@ -1,0 +1,41 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container page-head">
+  <div>
+    <span class="eyebrow">Casino lobby</span>
+    <h1>Russian Loto otaqları</h1>
+    <p class="muted">İstədiyin stake səviyyəsini seç, bilet al və canlı draw axınına qoşul.</p>
+  </div>
+  <a href="/wallet" class="btn btn-ghost">Balansı artır</a>
+</section>
+<section class="container room-list" data-lobby>
+  <% rooms.forEach(room => { %>
+    <article class="room-item" data-room-card data-slug="<%= room.slug %>" style="--room-theme:<%= room.theme %>">
+      <div class="room-head">
+        <div>
+          <h3><%= room.name %></h3>
+          <p><%= room.ticketLabel %> · x<%= room.multiplier %> · <%= helpers.winTypeLabel(room.winType) %></p>
+        </div>
+        <span class="status-pill <%= room.status %>" data-status><%= helpers.statusLabel(room.status) %></span>
+      </div>
+      <div class="room-metrics">
+        <div><span>Pot</span><strong data-pot><%= helpers.money(room.pot) %></strong></div>
+        <div><span>Jackpot</span><strong data-jackpot><%= room.jackpot !== null ? helpers.money(room.jackpot) : '—' %></strong></div>
+        <div><span>Timer</span><strong data-secs><%= helpers.fmtSecs(room.secsLeft) %></strong></div>
+      </div>
+      <div class="signal-strip">
+        <div class="signal-box"><span>Çəkilən top</span><strong data-drawn><%= room.drawnCount %>/90</strong></div>
+        <div class="signal-box"><span>Son qalib</span><strong data-last-winner><%= room.lastWinner || 'Hələ qalib yoxdur' %></strong></div>
+        <div class="signal-box"><span>Oyun rejimi</span><strong><%= helpers.winTypeLabel(room.winType) %></strong></div>
+      </div>
+      <div class="room-foot" style="margin-top:16px">
+        <small>Raund vəziyyəti hər 3 saniyədən bir yenilənir.</small>
+        <a class="btn btn-sm" href="/rooms/<%= room.slug %>/join">Qoşul</a>
+      </div>
+    </article>
+  <% }) %>
+</section>
+<script>
+  window.__LOBBY__ = true;
+</script>
+<%- include('partials/footer') %>

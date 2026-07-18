@@ -1,0 +1,18 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container auth-wrap">
+  <div class="auth-card glass-panel">
+    <span class="eyebrow">Qeydiyyat</span>
+    <h1>Yeni oyunçu hesabı yarat</h1>
+    <p class="muted">Qeydiyyatdan sonra birbaşa lobby-yə düşəcək və otaqlara qoşula biləcəksən.</p>
+    <form method="post" class="form-grid two-col">
+      <label>İstifadəçi adı<input name="username" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Telefon<input name="phone" /></label>
+      <label>Şifrə<input type="password" name="password" required /></label>
+      <label class="span-2">Referral kodu<input name="referralCode" placeholder="istəyə bağlı" value="<%= referralCode || '' %>" /></label>
+      <button class="btn span-2" type="submit">Hesab yarat</button>
+    </form>
+  </div>
+</section>
+<%- include('partials/footer') %>

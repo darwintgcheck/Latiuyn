@@ -1,0 +1,25 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container split-page">
+  <div class="glass-panel">
+    <span class="eyebrow">Profil</span>
+    <h1><%= currentUser.username %></h1>
+    <div class="summary-grid profile-grid">
+      <div><span>Email</span><strong><%= currentUser.email || '—' %></strong></div>
+      <div><span>Telefon</span><strong><%= currentUser.phone || '—' %></strong></div>
+      <div><span>Balans</span><strong><%= helpers.money(currentUser.balance) %></strong></div>
+      <div><span>Referral</span><strong><%= currentUser.referral_code %></strong></div>
+    </div>
+  </div>
+  <div class="glass-panel">
+    <h2>Bu build-də gücləndirilən hissələr</h2>
+    <ul class="feature-list">
+      <li>Render deploy üçün hazır konfigurasiya</li>
+      <li>PostgreSQL və in-memory demo rejimi</li>
+      <li>Wallet, qaliblər və referral axını</li>
+      <li>Server-side countdown və draw engine</li>
+      <li>Demo istifadəçi və seed otaqlar</li>
+    </ul>
+  </div>
+</section>
+<%- include('partials/footer') %>

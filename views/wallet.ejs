@@ -1,0 +1,32 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container split-page">
+  <div class="glass-panel">
+    <span class="eyebrow">Kassa</span>
+    <h1>Balans idarəsi</h1>
+    <p class="muted">Bu versiyada demo balans əlavə etmə, alış tarixçəsi və qazanc qeydləri hazırdır. Real ödəniş provayderi sonradan env ilə qoşula bilər.</p>
+    <div class="callout-box">
+      <strong>Demo top-up</strong>
+      <p class="muted" style="margin-top:8px">Bir kliklə oyun balansını artır və otaqlarda axını test et.</p>
+      <form action="/wallet/demo-topup" method="post" style="margin-top:14px">
+        <button class="btn" type="submit"><%= demoTopupAmount.toFixed(2) %>₼ balans əlavə et</button>
+      </form>
+    </div>
+  </div>
+  <div class="glass-panel">
+    <h2>Əməliyyat tarixçəsi</h2>
+    <div class="table-list">
+      <% tx.forEach(item => { %>
+        <div class="table-row">
+          <div>
+            <strong><%= item.type %></strong>
+            <small><%= new Date(item.created_at).toLocaleString('az-AZ') %></small>
+          </div>
+          <strong class="<%= item.amount >= 0 ? 'text-green' : 'text-red' %>"><%= helpers.money(item.amount) %></strong>
+        </div>
+      <% }) %>
+      <% if (!tx.length) { %><p class="muted">Hələ əməliyyat qeydi yoxdur.</p><% } %>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>
