@@ -1,0 +1,30 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container split-page">
+  <div class="glass-panel">
+    <span class="eyebrow">Referral</span>
+    <h1>Dəvət sistemi</h1>
+    <p class="muted">Linki paylaş, referal istifadəçinin alışından bonus qazan.</p>
+    <div class="copy-box">
+      <strong>Kod: <%= stats.code %></strong>
+      <input readonly value="<%= appUrl %>/register?ref=<%= stats.code %>" />
+    </div>
+    <div class="summary-grid">
+      <div><span>Toplam bonus</span><strong><%= stats.totalRewards.toFixed(2) %>₼</strong></div>
+      <div><span>Dəvət etdiyin istifadəçi</span><strong><%= stats.referredUsers.length %></strong></div>
+    </div>
+  </div>
+  <div class="glass-panel">
+    <h2>Dəvət olunanlar</h2>
+    <div class="table-list">
+      <% if (!stats.referredUsers.length) { %><p class="muted">Hələ heç kim yoxdur.</p><% } %>
+      <% stats.referredUsers.forEach(user => { %>
+        <div class="table-row">
+          <strong><%= user.username %></strong>
+          <small><%= new Date(user.created_at).toLocaleDateString('az-AZ') %></small>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>

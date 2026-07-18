@@ -1,0 +1,16 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container auth-wrap">
+  <div class="auth-card glass-panel">
+    <h1>Qeydiyyat</h1>
+    <form method="post" class="form-grid two-col">
+      <label>İstifadəçi adı<input name="username" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Telefon<input name="phone" /></label>
+      <label>Şifrə<input type="password" name="password" required /></label>
+      <label class="span-2">Referral kodu<input name="referralCode" placeholder="istəyə bağlı" value="<%= referralCode || '' %>" /></label>
+      <button class="btn span-2" type="submit">Hesab yarat</button>
+    </form>
+  </div>
+</section>
+<%- include('partials/footer') %>

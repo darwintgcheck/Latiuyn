@@ -1,0 +1,49 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container split-page">
+  <div class="glass-panel room-summary" style="--room-theme:<%= snapshot.room.theme %>">
+    <span class="eyebrow">Otaq</span>
+    <h1><%= snapshot.room.name %></h1>
+    <p class="muted">Status: <strong><%= snapshot.round.status %></strong> · Pot: <strong><%= snapshot.round.pot_amount.toFixed(2) %>₼</strong> · Oyunçu: <strong><%= snapshot.playerCount %></strong></p>
+    <div class="summary-grid">
+      <div><span>Bilet qiyməti</span><strong><%= Number(snapshot.room.ticket_price).toFixed(2) %>₼</strong></div>
+      <div><span>Maksimum</span><strong><%= snapshot.room.max_tickets %> bilet</strong></div>
+      <div><span>Qalib qaydası</span><strong><%= snapshot.room.win_type === 'one_line' ? 'Bir sətir' : 'Full house' %></strong></div>
+      <div><span>Jackpot</span><strong><%= snapshot.room.jackpot_enabled ? snapshot.round.jackpot_amount.toFixed(2) + '₼' : 'yoxdur' %></strong></div>
+    </div>
+  </div>
+  <div class="glass-panel buy-panel">
+    <h2>Bilet al</h2>
+    <form method="post" class="form-grid">
+      <label>Bilet sayı
+        <select name="count">
+          <% for (let i = 1; i <= snapshot.room.max_tickets; i++) { %>
+            <option value="<%= i %>"><%= i %></option>
+          <% } %>
+        </select>
+      </label>
+      <label class="checkbox-row"><input type="checkbox" name="autoMark" checked /> Auto mark aktiv</label>
+      <button class="btn" type="submit">Biletləri al</button>
+      <a class="btn btn-ghost" href="/rooms/<%= snapshot.room.slug %>/play">Mənim oyun səhifəm</a>
+    </form>
+    <% if (snapshot.myTickets.length) { %>
+      <div class="ticket-preview-wrap">
+        <h3>Mövcud biletlərim</h3>
+        <div class="ticket-grid-list">
+          <% snapshot.myTickets.forEach(ticket => { %>
+            <div class="ticket-card">
+              <% ticket.card.forEach(row => { %>
+                <div class="ticket-row">
+                  <% row.forEach(cell => { %>
+                    <span class="ticket-cell <%= cell === null ? 'empty' : '' %>"><%= cell ?? '' %></span>
+                  <% }) %>
+                </div>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/footer') %>

@@ -1,0 +1,45 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<section class="container page-head play-head">
+  <div>
+    <span class="eyebrow">Canlı oyun</span>
+    <h1><%= state.room.name %></h1>
+    <p class="muted">Status: <strong id="gameStatus"><%= state.round.status %></strong> · Pot: <strong id="gamePot"><%= state.round.potAmount.toFixed(2) %>₼</strong> · Oyunçu sayı: <strong id="gamePlayers"><%= state.round.playerCount %></strong></p>
+  </div>
+  <div class="play-side-panel glass-panel">
+    <div><span>Timer</span><strong id="gameTimer"><%= state.round.secsLeft %></strong></div>
+    <div><span>Jackpot</span><strong id="gameJackpot"><%= state.round.jackpotAmount !== null ? state.round.jackpotAmount.toFixed(2) + '₼' : '—' %></strong></div>
+    <a class="btn btn-sm" href="/rooms/<%= state.room.slug %>/join">Yeni bilet al</a>
+  </div>
+</section>
+<section class="container play-layout" data-play data-room-slug="<%= state.room.slug %>">
+  <div class="glass-panel balls-panel">
+    <h3>Çıxan rəqəmlər</h3>
+    <div id="drawnBalls" class="balls-grid">
+      <% state.round.drawnNumbers.forEach(n => { %><span class="ball"><%= n %></span><% }) %>
+    </div>
+  </div>
+  <div class="glass-panel tickets-panel">
+    <h3>Mənim biletlərim</h3>
+    <div id="ticketWrap" class="ticket-grid-list large">
+      <% state.round.myTickets.forEach(ticket => { %>
+        <div class="ticket-card live-ticket">
+          <% ticket.card.forEach(row => { %>
+            <div class="ticket-row">
+              <% row.forEach(cell => { const marked = ticket.markedNumbers.includes(cell); %>
+                <span class="ticket-cell <%= cell === null ? 'empty' : '' %> <%= marked ? 'marked' : '' %>"><%= cell ?? '' %></span>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<div class="container">
+  <div id="winnerBox" class="winner-box hidden"></div>
+</div>
+<script>
+  window.__PLAY_STATE__ = <%- JSON.stringify(state) %>;
+</script>
+<%- include('partials/footer') %>
