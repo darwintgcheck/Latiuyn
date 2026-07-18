@@ -8,7 +8,7 @@ import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
-import { initDb, pool, query } from './lib/db.js';
+import { initDb, pool, query, runtimeMode } from './lib/db.js';
 import { buyTicketsForUser, getGameState, getLobbySnapshot, getReferralStats, getRoomWithSnapshot, getWalletTransactions, listWinners, tickAllRooms } from './lib/game.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +16,25 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PgStore = connectPgSimple(session);
 const port = process.env.PORT || 3000;
+const brand = 'Russian Loto Royale';
+
+const money = (value) => `${Number(value || 0).toFixed(2)}₼`;
+const statusMap = {
+  waiting: 'Gözləyir',
+  starting: 'Başlamaqdadır',
+  started: 'Canlı oyun',
+  finished: 'Raund bitdi'
+};
+const winTypeMap = {
+  one_line: 'Bir sətir',
+  full: 'Full house'
+};
+const fmtSecs = (seconds) => {
+  const s = Math.max(0, Number(seconds || 0));
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return `${m}:${ss}`;
+};
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
@@ -24,8 +43,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
-app.use(session({
-  store: new PgStore({ pool, createTableIfMissing: true }),
+
+const sessionOptions = {
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
   saveUninitialized: false,
@@ -35,12 +54,30 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 24 * 14
   }
-}));
+};
+
+if (runtimeMode === 'postgres') {
+  sessionOptions.store = new PgStore({ pool, createTableIfMissing: true });
+}
+
+app.use(session(sessionOptions));
 
 app.use(async (req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.currentUser = null;
   res.locals.flash = req.session.flash;
+  res.locals.site = {
+    brand,
+    short: 'RLR',
+    runtimeMode,
+    tagline: 'Render üçün hazır Russian Loto kazino platforması'
+  };
+  res.locals.helpers = {
+    money,
+    statusLabel: (status) => statusMap[status] || status,
+    winTypeLabel: (type) => winTypeMap[type] || type,
+    fmtSecs
+  };
   delete req.session.flash;
 
   if (!req.session.userId) return next();
@@ -69,14 +106,14 @@ function makeReferralCode(username) {
 
 app.get('/healthz', async (_req, res) => {
   await tickAllRooms().catch(() => {});
-  res.json({ ok: true });
+  res.json({ ok: true, runtimeMode });
 });
 
 app.get('/', async (req, res, next) => {
   try {
     const rooms = await getLobbySnapshot();
     if (req.user) return res.redirect('/app');
-    res.render('landing', { title: 'BirLoto Pro', rooms });
+    res.render('landing', { title: 'Ana səhifə', rooms });
   } catch (error) {
     next(error);
   }
@@ -115,8 +152,8 @@ app.get('/register', (req, res) => {
 
 app.post('/register', async (req, res) => {
   const schema = z.object({
-    username: z.string().min(3).max(32),
-    email: z.string().email(),
+    username: z.string().trim().min(3).max(32),
+    email: z.string().trim().email(),
     phone: z.string().optional().or(z.literal('')),
     password: z.string().min(6),
     referralCode: z.string().optional().or(z.literal(''))
@@ -140,11 +177,11 @@ app.post('/register', async (req, res) => {
       `INSERT INTO users (username, email, phone, password_hash, referral_code, referred_by)
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING id`,
-      [username.trim(), email.trim().toLowerCase(), phone?.trim() || null, hash, makeReferralCode(username), referredBy]
+      [username, email.toLowerCase(), phone?.trim() || null, hash, makeReferralCode(username), referredBy]
     );
     req.session.userId = rows[0].id;
     res.redirect('/app');
-  } catch (error) {
+  } catch (_error) {
     setFlash(req, 'error', 'Bu istifadəçi adı və ya email artıq mövcuddur.');
     res.redirect('/register');
   }
@@ -222,7 +259,7 @@ app.get('/api/rooms/:slug/state', requireAuth, async (req, res, next) => {
 app.get('/wallet', requireAuth, async (req, res, next) => {
   try {
     const tx = await getWalletTransactions(req.user.id);
-    res.render('wallet', { title: 'Pul kisəsi', tx, demoTopupAmount: Number(process.env.DEMO_TOPUP_AMOUNT || 25) });
+    res.render('wallet', { title: 'Kassa', tx, demoTopupAmount: Number(process.env.DEMO_TOPUP_AMOUNT || 25) });
   } catch (error) {
     next(error);
   }
@@ -237,7 +274,7 @@ app.post('/wallet/demo-topup', requireAuth, async (req, res, next) => {
        VALUES ($1, 'demo_topup', $2, $3::jsonb)`,
       [req.user.id, amount, JSON.stringify({ source: 'manual-demo-topup' })]
     );
-    setFlash(req, 'success', `${amount.toFixed(2)}₼ demo balans əlavə olundu.`);
+    setFlash(req, 'success', `${amount.toFixed(2)}₼ balans əlavə olundu.`);
     res.redirect('/wallet');
   } catch (error) {
     next(error);
@@ -281,7 +318,7 @@ async function ensureDemoUser() {
   const hash = await bcrypt.hash('Baku2020_', 10);
   await query(
     `INSERT INTO users (username, email, password_hash, referral_code, balance)
-     VALUES ('demo', 'demo@birloto.local', $1, 'DEMO2026', 250)
+     VALUES ('demo', 'demo@rlr.local', $1, 'DEMO2026', 250)
      ON CONFLICT DO NOTHING`,
     [hash]
   );
@@ -291,7 +328,7 @@ async function bootstrap() {
   if (process.env.AUTO_MIGRATE !== 'false') await initDb();
   await ensureDemoUser();
   await tickAllRooms().catch((err) => console.error('tick bootstrap failed', err.message));
-  app.listen(port, () => console.log(`BirLoto Pro running on :${port}`));
+  app.listen(port, () => console.log(`${brand} running on :${port} (${runtimeMode})`));
 }
 
 bootstrap().catch((error) => {
