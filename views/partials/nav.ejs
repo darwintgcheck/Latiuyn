@@ -1,0 +1,32 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="<%= currentUser ? '/app' : '/' %>" class="brand">
+      <span class="brand-badge">R</span>
+      <span><%= site.brand %></span>
+    </a>
+    <nav class="top-nav">
+      <% if (currentUser) { %>
+        <a href="/app" class="nav-link <%= currentPath === '/app' ? 'active' : '' %>">Otaqlar</a>
+        <a href="/winners" class="nav-link <%= currentPath === '/winners' ? 'active' : '' %>">Qaliblər</a>
+        <a href="/referrals" class="nav-link <%= currentPath === '/referrals' ? 'active' : '' %>">Dəvət</a>
+        <a href="/wallet" class="nav-link <%= currentPath === '/wallet' ? 'active' : '' %>">Kassa</a>
+        <a href="/profile" class="nav-link <%= currentPath === '/profile' ? 'active' : '' %>">Profil</a>
+      <% } else { %>
+        <a href="/login" class="nav-link">Giriş</a>
+        <a href="/register" class="btn btn-sm">Qeydiyyat</a>
+      <% } %>
+    </nav>
+    <% if (currentUser) { %>
+      <div class="header-user">
+        <div class="balance-chip"><span>Balans</span><strong><%= helpers.money(currentUser.balance) %></strong></div>
+        <div class="runtime-chip"><%= site.runtimeMode === 'postgres' ? 'PostgreSQL' : 'Memory demo' %></div>
+        <form action="/logout" method="post"><button class="btn btn-sm btn-ghost" type="submit">Çıxış</button></form>
+      </div>
+    <% } %>
+  </div>
+</header>
+<% if (flash?.message) { %>
+  <div class="container">
+    <div class="flash <%= flash.type %>"><%= flash.message %></div>
+  </div>
+<% } %>
